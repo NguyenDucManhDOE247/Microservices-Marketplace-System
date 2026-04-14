@@ -1,35 +1,24 @@
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: mongo
-  namespace: osm
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: mongo
-  template:
-    metadata:
-      labels:
-        app: mongo
-    spec:
-      containers:
-        - name: mongo
-          image: mongo:8.0-noble
-          ports:
-            - containerPort: 27017         
-
----
+# MongoDB runs on EC2 (10.0.155.19) - this Service + Endpoints
+# allows K8s pods to reach it via dns name "mongo" as before
 apiVersion: v1
 kind: Service
 metadata:
   name: mongo
   namespace: osm
 spec:
-  type: ClusterIP
-  selector:
-    app: mongo
   ports:
     - protocol: TCP
       port: 27017
       targetPort: 27017
+
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: mongo
+  namespace: osm
+subsets:
+  - addresses:
+      - ip: "10.0.155.19"
+    ports:
+      - port: 27017

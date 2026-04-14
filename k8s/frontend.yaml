@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: nguyenducmanh247/osm-frontend:latest
+          image: 825621302666.dkr.ecr.ap-southeast-1.amazonaws.com/osm-frontend:latest
           ports:
             - containerPort: 80
 

@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: user-service
-          image: nguyenducmanh247/osm-user-service:latest
+          image: 825621302666.dkr.ecr.ap-southeast-1.amazonaws.com/osm-user-service:latest
           ports:
             - containerPort: 4001
           env:

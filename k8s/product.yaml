@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: product-service
-          image: nguyenducmanh247/osm-product-service:latest
+          image: 825621302666.dkr.ecr.ap-southeast-1.amazonaws.com/osm-product-service:latest
           ports:
             - containerPort: 4002
           env:

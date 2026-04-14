@@ -59,3 +59,29 @@ coverage/
 # Temporary files
 tmp/
 temp/
+
+# Terraform
+terraform/.terraform/
+terraform/*.tfstate
+terraform/*.tfstate.backup
+terraform/*.tfvars
+terraform/.terraform.lock.hcl
+*.tfplan
+
+# Ansible
+ansible/*.retry
+ansible/inventory/*.cache/
+
+# AWS
+.aws/
+osm-key.pem
+*.pem
+
+# eksctl
+eksctl-cluster.yaml
+
+# Keys / documents
+*.pem
+*.ppk
+*.docx
+*.txt

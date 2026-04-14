@@ -4,7 +4,10 @@ pipeline {
     agent any
     
     environment {
-        DOCKER_HUB_USER = "nguyenducmanh247"
+        AWS_ACCOUNT_ID = "825621302666"
+        AWS_REGION = "ap-southeast-1"
+        ECR_REGISTRY = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+        EKS_CLUSTER = "osm-cluster"
         IMAGE_TAG = "latest"
         K8S_PATH = "k8s"
     }

@@ -15,9 +15,9 @@ spec:
     spec:
       containers:
         - name: gateway
-          image: nguyenducmanh247/osm-gateway:latest
+          image: 825621302666.dkr.ecr.ap-southeast-1.amazonaws.com/osm-gateway:latest
           ports:
-            - containerPort: 80   
+            - containerPort: 80
 
 ---
 apiVersion: v1
@@ -33,4 +33,3 @@ spec:
     - protocol: TCP
       port: 80
       targetPort: 80
-
