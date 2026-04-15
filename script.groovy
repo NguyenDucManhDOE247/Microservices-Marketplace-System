@@ -3,10 +3,10 @@
 // Branch-aware: refactor/* → validate | dev → osm-dev | main → osm
 // =====================================================================
 
-def SERVICES = ["user-service", "product-service", "order-service", "payment-service", "frontend", "gateway"]
-def K8S_NAMESPACE = ""
-def IMAGE_TAG = ""
-def APP_VERSION = ""
+SERVICES = ["user-service", "product-service", "order-service", "payment-service", "frontend", "gateway"]
+K8S_NAMESPACE = ""
+IMAGE_TAG = ""
+APP_VERSION = ""
 
 // -------------------------------------------------------------------
 // Init: determine namespace and image tag based on branch
