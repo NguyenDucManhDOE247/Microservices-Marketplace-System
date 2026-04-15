@@ -85,3 +85,5 @@ eksctl-cluster.yaml
 *.ppk
 *.docx
 *.txt
+*.pdf
+*.csv

@@ -1,4 +1,4 @@
-# MongoDB runs on EC2 (10.0.155.19) - this Service + Endpoints
+# MongoDB runs on EC2 (10.0.10.45) - this Service + Endpoints
 # allows K8s pods to reach it via dns name "mongo" as before
 apiVersion: v1
 kind: Service
@@ -19,6 +19,6 @@ metadata:
   namespace: osm
 subsets:
   - addresses:
-      - ip: "10.0.155.19"
+      - ip: "10.0.10.45"
     ports:
       - port: 27017

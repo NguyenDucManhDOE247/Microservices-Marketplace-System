@@ -1,3 +1,5 @@
+#!/usr/bin/env groovy
+
 def gv
 
 pipeline {
@@ -8,7 +10,6 @@ pipeline {
         AWS_REGION = "ap-southeast-1"
         ECR_REGISTRY = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
         EKS_CLUSTER = "osm-cluster"
-        IMAGE_TAG = "latest"
         K8S_PATH = "k8s"
     }
     
@@ -17,6 +18,7 @@ pipeline {
             steps {
                 script {
                     gv = load "script.groovy"
+                    gv.initBranchConfig()
                 }
             }
         }
@@ -29,15 +31,54 @@ pipeline {
             }
         }
 
-        stage("Build and Push Docker Images") {
+        stage("Validate") {
+            when {
+                expression { BRANCH_NAME.startsWith("refactor/") }
+            }
             steps {
                 script {
-                    gv.buildAndPushDockerImages()
+                    gv.validateCode()
+                }
+            }
+        }
+
+        stage("Read Version") {
+            when {
+                expression { BRANCH_NAME == "main" }
+            }
+            steps {
+                script {
+                    gv.readAppVersion()
+                }
+            }
+        }
+
+        stage("Build Docker Images") {
+            when {
+                expression { BRANCH_NAME == "main" || BRANCH_NAME == "dev" }
+            }
+            steps {
+                script {
+                    gv.buildDockerImages()
+                }
+            }
+        }
+
+        stage("Push to ECR") {
+            when {
+                expression { BRANCH_NAME == "main" || BRANCH_NAME == "dev" }
+            }
+            steps {
+                script {
+                    gv.pushDockerImages()
                 }
             }
         }
         
         stage("Deploy to Kubernetes") {
+            when {
+                expression { BRANCH_NAME == "main" || BRANCH_NAME == "dev" }
+            }
             steps {
                 script {
                     gv.deployToKubernetes()
@@ -46,9 +87,23 @@ pipeline {
         }
         
         stage("Verify Deployment") {
+            when {
+                expression { BRANCH_NAME == "main" || BRANCH_NAME == "dev" }
+            }
             steps {
                 script {
                     gv.verifyDeployment()
+                }
+            }
+        }
+
+        stage("Bump Version") {
+            when {
+                expression { BRANCH_NAME == "main" }
+            }
+            steps {
+                script {
+                    gv.bumpVersion()
                 }
             }
         }
@@ -56,10 +111,10 @@ pipeline {
     
     post {
         success {
-            echo "CI/CD pipeline executed successfully!"
+            echo "Pipeline for branch '${BRANCH_NAME}' executed successfully!"
         }
         failure {
-            echo "CI/CD pipeline failed!"
+            echo "Pipeline for branch '${BRANCH_NAME}' failed!"
         }
     }
 }
