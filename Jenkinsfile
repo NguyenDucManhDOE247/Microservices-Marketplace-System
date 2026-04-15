@@ -14,6 +14,19 @@ pipeline {
     }
     
     stages {
+        stage("Skip CI Check") {
+            steps {
+                script {
+                    def commitMsg = sh(script: 'git log -1 --pretty=%B', returnStdout: true).trim()
+                    if (commitMsg.contains('[skip ci]')) {
+                        echo "Commit contains [skip ci], aborting pipeline."
+                        currentBuild.result = 'NOT_BUILT'
+                        error('Skipping build due to [skip ci]')
+                    }
+                }
+            }
+        }
+
         stage("Init") {
             steps {
                 script {
