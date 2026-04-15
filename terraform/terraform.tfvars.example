@@ -1,0 +1,20 @@
+# Copy this file to terraform.tfvars and fill in values
+# terraform.tfvars is gitignored — do NOT commit it
+
+aws_region     = "ap-southeast-1"
+project_name   = "osm"
+environment    = "production"
+key_pair_name  = "osm-key"        # Your existing EC2 key pair name
+allowed_ssh_cidr = "0.0.0.0/0"   # Restrict to your IP in production
+
+# EKS
+eks_cluster_name     = "osm-cluster"
+eks_cluster_version  = "1.32"
+eks_node_instance_type = "t3.medium"
+eks_node_desired     = 2
+eks_node_min         = 1
+eks_node_max         = 3
+
+# EC2
+mongodb_instance_type = "t3.small"
+jenkins_instance_type = "t3.medium"
