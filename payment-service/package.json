@@ -1,6 +1,6 @@
 {
   "name": "payment-service",
-  "version": "1.0.12",
+  "version": "1.0.13",
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js"
