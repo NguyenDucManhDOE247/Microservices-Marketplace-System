@@ -91,9 +91,7 @@ def bumpVersion() {
     // Update version in all service package.json files
     SERVICES.each { svc ->
         if (fileExists("${svc}/package.json")) {
-            dir(svc) {
-                sh "npm version ${newVersion} --no-git-tag-version --allow-same-version"
-            }
+            sh "sed -i 's/\"version\": \"${APP_VERSION}\"/\"version\": \"${newVersion}\"/' ${svc}/package.json"
         }
     }
 
