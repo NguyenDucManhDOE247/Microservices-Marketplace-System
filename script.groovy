@@ -91,9 +91,7 @@ def bumpVersion() {
     // Update version in all service package.json files
     SERVICES.each { svc ->
         if (fileExists("${svc}/package.json")) {
-            dir(svc) {
-                sh "npm version ${newVersion} --no-git-tag-version --allow-same-version"
-            }
+            sh "sed -i 's/\"version\": \"${APP_VERSION}\"/\"version\": \"${newVersion}\"/' ${svc}/package.json"
         }
     }
 
@@ -104,7 +102,7 @@ def bumpVersion() {
             git config user.name "Jenkins CI"
             git add */package.json
             git commit -m "ci: bump version to ${newVersion} [skip ci]"
-            git push https://\${GIT_USER}:\${GIT_TOKEN}@github.com/NguyenDucManhDOE247/Online-Service-Marketplace.git HEAD:main
+            git push https://\${GIT_USER}:\${GIT_TOKEN}@github.com/NguyenDucManhDOE247/Microservices-Marketplace-System.git HEAD:main
         """
     }
 
