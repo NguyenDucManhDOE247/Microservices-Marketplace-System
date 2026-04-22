@@ -17,11 +17,13 @@ pipeline {
         stage("Skip CI Check") {
             steps {
                 script {
-                    def commitMsg = sh(script: 'git log -1 --pretty=%B', returnStdout: true).trim()
-                    if (commitMsg.contains('[skip ci]')) {
-                        echo "Commit contains [skip ci], aborting pipeline."
-                        currentBuild.result = 'NOT_BUILT'
-                        error('Skipping build due to [skip ci]')
+                    def commitMsg = sh(script: "git log -1 --pretty=%B", returnStdout: true).trim()
+                    if (commitMsg.contains("[skip ci]")) {
+                        currentBuild.description = "Skipped: [skip ci] commit"
+                        currentBuild.result = 'ABORTED'
+                        throw new org.jenkinsci.plugins.workflow.steps.FlowInterruptedException(
+                            hudson.model.Result.ABORTED
+                        )
                     }
                 }
             }

@@ -1,0 +1,34 @@
+---
+# =============================================================================
+# Role: common
+# Runs on ALL hosts. Ensures baseline OS state after cloud-init.
+# =============================================================================
+
+# Wait for cloud-init (user_data) to complete before we do anything
+- name: Wait for cloud-init to complete
+  shell: cloud-init status --wait
+  changed_when: false
+  failed_when: false
+  timeout: 300
+
+- name: Update apt package cache
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+
+- name: Install common utility packages
+  apt:
+    name:
+      - curl
+      - wget
+      - htop
+      - vim
+      - net-tools
+      - unzip
+      - python3-pip
+      - python3-pymongo # Required by Ansible MongoDB modules
+    state: present
+
+- name: Set system timezone to UTC
+  timezone:
+    name: UTC
