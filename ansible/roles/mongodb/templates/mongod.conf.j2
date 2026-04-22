@@ -1,0 +1,25 @@
+# mongod.conf — managed by Ansible
+# Template: ansible/roles/mongodb/templates/mongod.conf.j2
+
+# Where and how to store data.
+storage:
+  dbPath: /var/lib/mongodb
+
+# Where to write logging data.
+systemLog:
+  destination: file
+  logAppend: true
+  path: /var/log/mongodb/mongod.log
+
+# Network interfaces
+net:
+  port: {{ mongodb_port }}
+  bindIp: 0.0.0.0
+
+# Process management
+processManagement:
+  timeZoneInfo: /usr/share/zoneinfo
+
+# Security - enable authorization after admin user is created
+security:
+  authorization: enabled

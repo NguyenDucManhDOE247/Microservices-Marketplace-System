@@ -1,0 +1,48 @@
+#!/bin/bash
+# =============================================================================
+# MongoDB Backup Script
+# Managed by Ansible — ansible/roles/mongodb/templates/backup.sh.j2
+# Schedule: Daily at 02:00 AM UTC via cron
+# =============================================================================
+set -euo pipefail
+
+BACKUP_DIR="{{ backup_dir }}"
+DATE=$(date +%Y%m%d_%H%M%S)
+BACKUP_NAME="backup_${DATE}"
+BACKUP_PATH="${BACKUP_DIR}/${BACKUP_NAME}"
+RETENTION_DAYS={{ backup_retention_days }}
+LOG_PREFIX="[$(date '+%Y-%m-%d %H:%M:%S')] [mongodb-backup]"
+
+echo "${LOG_PREFIX} =============================="
+echo "${LOG_PREFIX} Starting MongoDB backup..."
+
+# Create backup directory if it doesn't exist
+mkdir -p "${BACKUP_DIR}"
+
+# Run mongodump
+mongodump \
+  --host     127.0.0.1 \
+  --port     {{ mongodb_port }} \
+  --username {{ mongodb_admin_user }} \
+  --password {{ mongodb_admin_password }} \
+  --authenticationDatabase admin \
+  --out      "${BACKUP_PATH}" \
+  --quiet
+
+echo "${LOG_PREFIX} Dump completed: ${BACKUP_PATH}"
+
+# Compress the dump
+tar -czf "${BACKUP_PATH}.tar.gz" -C "${BACKUP_DIR}" "${BACKUP_NAME}"
+rm -rf "${BACKUP_PATH}"
+echo "${LOG_PREFIX} Compressed: ${BACKUP_PATH}.tar.gz"
+
+# Print backup size
+BACKUP_SIZE=$(du -sh "${BACKUP_PATH}.tar.gz" | cut -f1)
+echo "${LOG_PREFIX} Backup size: ${BACKUP_SIZE}"
+
+# Cleanup old backups
+OLD_COUNT=$(find "${BACKUP_DIR}" -name "backup_*.tar.gz" -mtime +${RETENTION_DAYS} | wc -l)
+find "${BACKUP_DIR}" -name "backup_*.tar.gz" -mtime +${RETENTION_DAYS} -delete
+echo "${LOG_PREFIX} Removed ${OLD_COUNT} backup(s) older than ${RETENTION_DAYS} days"
+
+echo "${LOG_PREFIX} Backup finished successfully."

@@ -1,0 +1,150 @@
+---
+# =============================================================================
+# Role: mongodb
+# Configures MongoDB 7.0 that was installed by Terraform user_data.
+# Responsibilities:
+#   1. Enable authentication (mongod.conf)
+#   2. Create admin user (via localhost exception, before auth is enabled)
+#   3. Create application user per database
+#   4. Set up daily backup cron job
+# =============================================================================
+
+# --------------------------------------------------------
+# 1. Verify MongoDB is running from user_data install
+# --------------------------------------------------------
+- name: Wait for MongoDB port to be available
+  wait_for:
+    host: 127.0.0.1
+    port: "{{ mongodb_port }}"
+    delay: 5
+    timeout: 120
+    state: started
+
+# --------------------------------------------------------
+# 2. Create admin user BEFORE enabling auth
+#    Uses MongoDB's localhost exception (only works when
+#    no users exist yet and auth is NOT yet enabled)
+# --------------------------------------------------------
+- name: Check if MongoDB admin user already exists (unauthenticated)
+  shell: >
+    mongosh --quiet --port {{ mongodb_port }} --eval
+    "db.getSiblingDB('admin').getUser('{{ mongodb_admin_user }}')"
+  register: admin_check
+  changed_when: false
+  failed_when: false
+
+- name: Create MongoDB admin user via localhost exception
+  shell: |
+    mongosh admin --quiet --port {{ mongodb_port }} --eval "
+      db.createUser({
+        user: '{{ mongodb_admin_user }}',
+        pwd:  '{{ mongodb_admin_password }}',
+        roles: [
+          { role: 'userAdminAnyDatabase',  db: 'admin' },
+          { role: 'readWriteAnyDatabase',  db: 'admin' },
+          { role: 'dbAdminAnyDatabase',    db: 'admin' },
+          { role: 'clusterAdmin',          db: 'admin' }
+        ]
+      })
+    "
+  when: >
+    admin_check.stdout is defined and
+    (admin_check.stdout == 'null' or admin_check.rc != 0)
+  no_log: true
+  register: admin_create
+  changed_when: admin_create.rc == 0
+
+# --------------------------------------------------------
+# 3. Deploy mongod.conf with authorization enabled
+# --------------------------------------------------------
+- name: Deploy mongod.conf (enable auth, bind 0.0.0.0)
+  template:
+    src: mongod.conf.j2
+    dest: /etc/mongod.conf
+    owner: root
+    group: root
+    mode: "0644"
+    backup: yes
+  notify: restart mongod
+
+- name: Ensure mongod service is enabled and running
+  service:
+    name: mongod
+    state: started
+    enabled: yes
+
+- name: Flush handlers to apply config restart now
+  meta: flush_handlers
+
+- name: Wait for MongoDB to accept connections after restart
+  wait_for:
+    host: 127.0.0.1
+    port: "{{ mongodb_port }}"
+    delay: 3
+    timeout: 60
+    state: started
+
+# --------------------------------------------------------
+# 4. Create application user for each database
+#    Runs AFTER auth is enabled — uses admin credentials
+# --------------------------------------------------------
+- name: Create application user for each database
+  shell: |
+    mongosh admin --quiet --port {{ mongodb_port }} \
+      -u "{{ mongodb_admin_user }}" \
+      -p "{{ mongodb_admin_password }}" \
+      --authenticationDatabase admin \
+      --eval "
+        var targetDb = db.getSiblingDB('{{ item }}');
+        var existing = targetDb.getUser('{{ mongodb_app_user }}');
+        if (!existing) {
+          targetDb.createUser({
+            user: '{{ mongodb_app_user }}',
+            pwd:  '{{ mongodb_app_password }}',
+            roles: [{ role: 'readWrite', db: '{{ item }}' }]
+          });
+          print('CREATED');
+        } else {
+          print('EXISTS');
+        }
+      "
+  loop: "{{ mongodb_databases }}"
+  register: app_user_result
+  changed_when: "'CREATED' in app_user_result.stdout"
+  no_log: true
+
+- name: Report app user creation status per database
+  debug:
+    msg: "{{ item.item }}: {{ 'created' if 'CREATED' in (item.stdout | default('')) else 'already exists' }}"
+  loop: "{{ app_user_result.results | default([]) }}"
+  loop_control:
+    label: "{{ item.item | default('unknown') }}"
+  when: not ansible_check_mode
+
+# --------------------------------------------------------
+# 5. Backup setup
+# --------------------------------------------------------
+- name: Create backup directory
+  file:
+    path: "{{ backup_dir }}"
+    state: directory
+    owner: mongodb
+    group: mongodb
+    mode: "0750"
+
+- name: Deploy MongoDB backup script
+  template:
+    src: backup.sh.j2
+    dest: /usr/local/bin/mongodb-backup.sh
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Set up daily backup cron job at 02:00 AM UTC
+  cron:
+    name: "OSM MongoDB daily backup"
+    user: mongodb
+    minute: "0"
+    hour: "2"
+    job: "/usr/local/bin/mongodb-backup.sh >> /var/log/mongodb-backup.log 2>&1"
+    state: present

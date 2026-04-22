@@ -1,0 +1,39 @@
+---
+# =============================================================================
+# Group Variables - All Hosts
+# Online Service Marketplace - Ansible Configuration
+# =============================================================================
+
+# MongoDB
+mongodb_port: 27017
+mongodb_admin_user: "admin"
+mongodb_admin_password: "OsmAdmin2024!" # Change in production, use Vault
+mongodb_app_user: "osmapp"
+mongodb_app_password: "OsmApp2024!" # Change in production, use Vault
+
+mongodb_databases:
+  - userservice
+  - productservice
+  - orderservice
+  - paymentservice
+
+# Backup
+backup_dir: "/backup/mongodb"
+backup_retention_days: 7
+
+# AWS / EKS
+aws_region: "ap-southeast-1"
+eks_cluster_name: "osm-cluster"
+
+# Jenkins plugins to install
+jenkins_plugins:
+  - git
+  - docker-workflow
+  - pipeline-stage-view
+  - kubernetes-cli
+  - aws-credentials
+  - timestamper
+  - github
+  - credentials-binding
+  - workflow-aggregator
+  - pipeline-model-definition
