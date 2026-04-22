@@ -19,8 +19,8 @@
 
 - name: Configure MongoDB Server
   hosts: mongodb
-  become: yes
-  gather_facts: yes
+  become: true
+  gather_facts: true
   roles:
     - role: common
       tags: ["common", "mongodb"]
@@ -29,8 +29,8 @@
 
 - name: Configure Jenkins Server
   hosts: jenkins
-  become: yes
-  gather_facts: yes
+  become: true
+  gather_facts: true
   roles:
     - role: common
       tags: ["common", "jenkins"]
