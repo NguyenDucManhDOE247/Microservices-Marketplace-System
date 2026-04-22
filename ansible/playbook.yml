@@ -1,0 +1,38 @@
+---
+# =============================================================================
+# Main Playbook - Online Service Marketplace
+# =============================================================================
+#
+# Usage:
+#   ansible-playbook playbook.yml               # Run all roles
+#   ansible-playbook playbook.yml --tags mongodb # Run only mongodb role
+#   ansible-playbook playbook.yml --tags jenkins # Run only jenkins role
+#   ansible-playbook playbook.yml --check        # Dry-run
+#   ansible-playbook playbook.yml -v             # Verbose output
+#
+# Prerequisites:
+#   1. Fill in IPs in inventory/hosts.yml from: cd ../terraform && terraform output
+#   2. Ensure osm-key.pem exists in root directory and has chmod 400
+#   3. Terraform infrastructure must be running (terraform apply completed)
+#
+# =============================================================================
+
+- name: Configure MongoDB Server
+  hosts: mongodb
+  become: yes
+  gather_facts: yes
+  roles:
+    - role: common
+      tags: ["common", "mongodb"]
+    - role: mongodb
+      tags: ["mongodb"]
+
+- name: Configure Jenkins Server
+  hosts: jenkins
+  become: yes
+  gather_facts: yes
+  roles:
+    - role: common
+      tags: ["common", "jenkins"]
+    - role: jenkins
+      tags: ["jenkins"]
