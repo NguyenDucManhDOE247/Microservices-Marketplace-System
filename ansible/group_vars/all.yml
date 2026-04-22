@@ -7,9 +7,9 @@
 # MongoDB
 mongodb_port: 27017
 mongodb_admin_user: "admin"
-mongodb_admin_password: "OsmAdmin2024!"     # Change in production, use Vault
+mongodb_admin_password: "OsmAdmin2024!" # Change in production, use Vault
 mongodb_app_user: "osmapp"
-mongodb_app_password: "OsmApp2024!"         # Change in production, use Vault
+mongodb_app_password: "OsmApp2024!" # Change in production, use Vault
 
 mongodb_databases:
   - userservice

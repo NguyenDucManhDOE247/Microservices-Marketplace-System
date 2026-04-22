@@ -63,7 +63,7 @@
     dest: /etc/mongod.conf
     owner: root
     group: root
-    mode: '0644'
+    mode: "0644"
     backup: yes
   notify: restart mongod
 
@@ -130,7 +130,7 @@
     state: directory
     owner: mongodb
     group: mongodb
-    mode: '0750'
+    mode: "0750"
 
 - name: Deploy MongoDB backup script
   template:
@@ -138,7 +138,7 @@
     dest: /usr/local/bin/mongodb-backup.sh
     owner: root
     group: root
-    mode: '0755'
+    mode: "0755"
 
 - name: Set up daily backup cron job at 02:00 AM UTC
   cron:

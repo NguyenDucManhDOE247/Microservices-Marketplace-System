@@ -26,7 +26,7 @@
       - net-tools
       - unzip
       - python3-pip
-      - python3-pymongo    # Required by Ansible MongoDB modules
+      - python3-pymongo # Required by Ansible MongoDB modules
     state: present
 
 - name: Set system timezone to UTC
