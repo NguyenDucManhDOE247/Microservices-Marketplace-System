@@ -102,7 +102,7 @@ def bumpVersion() {
             git config user.name "Jenkins CI"
             git add */package.json
             git commit -m "ci: bump version to ${newVersion} [skip ci]"
-            git push https://\${GIT_USER}:\${GIT_TOKEN}@github.com/NguyenDucManhDOE247/Online-Service-Marketplace.git HEAD:main
+            git push https://\${GIT_USER}:\${GIT_TOKEN}@github.com/NguyenDucManhDOE247/Microservices-Marketplace-System.git HEAD:main
         """
     }
 
