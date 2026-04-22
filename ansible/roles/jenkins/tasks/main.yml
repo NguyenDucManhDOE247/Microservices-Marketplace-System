@@ -30,7 +30,8 @@
   register: jenkins_ui_check
   retries: 20
   delay: 15
-  until: jenkins_ui_check.status == 200
+  until: jenkins_ui_check.status is defined and jenkins_ui_check.status == 200
+  when: not ansible_check_mode
 
 # --------------------------------------------------------
 # 2. Add jenkins user to docker group
@@ -94,7 +95,8 @@
 
 - name: Print kubectl verification output
   debug:
-    msg: "EKS nodes: {{ kubectl_check.stdout_lines }}"
+    msg: "EKS nodes: {{ kubectl_check.stdout_lines | default([]) }}"
+  when: not ansible_check_mode
 
 # --------------------------------------------------------
 # 4. Install Jenkins plugins via CLI
@@ -134,11 +136,13 @@
 
 - name: Report plugin installation results
   debug:
-    msg: "Plugin {{ item.item }}: {{ 'OK' if item.rc == 0 else 'FAILED/ALREADY INSTALLED' }}"
-  loop: "{{ plugin_result.results }}"
+    msg: "Plugin {{ item.item }}: {{ 'OK' if (item.rc | default(1)) == 0 else 'FAILED/ALREADY INSTALLED' }}"
+  loop: "{{ plugin_result.results | default([]) }}"
   loop_control:
-    label: "{{ item.item }}"
-  when: plugin_result.results is defined
+    label: "{{ item.item | default('unknown') }}"
+  when:
+    - not ansible_check_mode
+    - plugin_result.results is defined
 
 # --------------------------------------------------------
 # 5. Safe-restart Jenkins to activate installed plugins

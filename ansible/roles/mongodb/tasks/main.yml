@@ -115,10 +115,11 @@
 
 - name: Report app user creation status per database
   debug:
-    msg: "{{ item.item }}: {{ 'created' if 'CREATED' in item.stdout else 'already exists' }}"
-  loop: "{{ app_user_result.results }}"
+    msg: "{{ item.item }}: {{ 'created' if 'CREATED' in (item.stdout | default('')) else 'already exists' }}"
+  loop: "{{ app_user_result.results | default([]) }}"
   loop_control:
-    label: "{{ item.item }}"
+    label: "{{ item.item | default('unknown') }}"
+  when: not ansible_check_mode
 
 # --------------------------------------------------------
 # 5. Backup setup
