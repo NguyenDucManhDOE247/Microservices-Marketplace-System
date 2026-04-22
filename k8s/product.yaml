@@ -16,11 +16,39 @@ spec:
       containers:
         - name: product-service
           image: 825621302666.dkr.ecr.ap-southeast-1.amazonaws.com/osm-product-service:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 4002
+          envFrom:
+            - configMapRef:
+                name: osm-config
           env:
             - name: MONGO_URI
-              value: mongodb://mongo:27017/productservice
+              valueFrom:
+                secretKeyRef:
+                  name: osm-secrets
+                  key: MONGO_URI_PRODUCT
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+          readinessProbe:
+            httpGet:
+              path: /api/products/
+              port: 4002
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /api/products/
+              port: 4002
+            initialDelaySeconds: 60
+            periodSeconds: 20
+            failureThreshold: 3
 
 ---
 apiVersion: v1

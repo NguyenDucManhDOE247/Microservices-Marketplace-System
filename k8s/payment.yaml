@@ -16,8 +16,39 @@ spec:
       containers:
         - name: payment-service
           image: 825621302666.dkr.ecr.ap-southeast-1.amazonaws.com/osm-payment-service:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 4004
+          envFrom:
+            - configMapRef:
+                name: osm-config
+          env:
+            - name: MONGO_URI
+              valueFrom:
+                secretKeyRef:
+                  name: osm-secrets
+                  key: MONGO_URI_PAYMENT
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+          readinessProbe:
+            httpGet:
+              path: /api/payments/
+              port: 4004
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /api/payments/
+              port: 4004
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            failureThreshold: 3
 
 ---
 apiVersion: v1

@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: osm-config
+  namespace: osm
+data:
+  NODE_ENV: "production"
+  USER_SERVICE_URL: "http://user-service:4001"
+  PRODUCT_SERVICE_URL: "http://product-service:4002"
+  ORDER_SERVICE_URL: "http://order-service:4003"
+  PAYMENT_SERVICE_URL: "http://payment-service:4004"

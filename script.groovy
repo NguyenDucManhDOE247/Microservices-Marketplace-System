@@ -148,9 +148,51 @@ def pushDockerImages() {
 // -------------------------------------------------------------------
 // Deploy to Kubernetes
 // -------------------------------------------------------------------
+// Install cluster-level prerequisites (idempotent - safe to run every time)
+// -------------------------------------------------------------------
+def installClusterPrerequisites() {
+    echo "Checking and installing cluster prerequisites..."
+
+    // Install NGINX Ingress Controller if not present
+    sh """
+        if ! kubectl get namespace ingress-nginx > /dev/null 2>&1; then
+            echo "Installing NGINX Ingress Controller..."
+            kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.10.1/deploy/static/provider/aws/deploy.yaml
+            echo "Waiting for NGINX Ingress Controller to be ready..."
+            kubectl wait --namespace ingress-nginx \
+                --for=condition=ready pod \
+                --selector=app.kubernetes.io/component=controller \
+                --timeout=180s
+        else
+            echo "NGINX Ingress Controller already installed"
+        fi
+    """
+
+    // Install metrics-server if not present (required for HPA)
+    sh """
+        if ! kubectl get deployment metrics-server -n kube-system > /dev/null 2>&1; then
+            echo "Installing metrics-server..."
+            kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+            echo "Waiting for metrics-server to be ready..."
+            kubectl wait --namespace kube-system \
+                --for=condition=ready pod \
+                --selector=k8s-app=metrics-server \
+                --timeout=120s
+        else
+            echo "metrics-server already installed"
+        fi
+    """
+
+    echo "Cluster prerequisites verified"
+}
+
+// -------------------------------------------------------------------
 def deployToKubernetes() {
     echo "Updating kubeconfig for EKS cluster ${EKS_CLUSTER}..."
     sh "aws eks update-kubeconfig --name ${EKS_CLUSTER} --region ${AWS_REGION}"
+
+    // Install NGINX Ingress Controller + metrics-server if not already present
+    installClusterPrerequisites()
 
     echo "Deploying to namespace: ${K8S_NAMESPACE}"
 
@@ -158,16 +200,22 @@ def deployToKubernetes() {
     sh "kubectl create namespace ${K8S_NAMESPACE} --dry-run=client -o yaml | kubectl apply -f -"
 
     if (BRANCH_NAME == "main") {
-        // Main branch: apply manifests directly (namespace already 'osm' in yaml files)
+        // Apply namespace, ConfigMap and Secrets first so pods can reference them on startup
         sh "kubectl apply -f ${K8S_PATH}/namespace.yaml"
+        sh "kubectl apply -f ${K8S_PATH}/configmap.yaml"
+        sh "kubectl apply -f ${K8S_PATH}/secrets.yaml"
+        // Apply everything else (idempotent - configmap/secrets applied again is fine)
         sh "kubectl apply -f ${K8S_PATH}/"
     } else if (BRANCH_NAME == "dev") {
-        // Dev branch: copy manifests and replace namespace
+        // Dev branch: copy manifests, replace namespace and image tags
         sh """
             mkdir -p /tmp/k8s-dev
             cp ${K8S_PATH}/*.yaml /tmp/k8s-dev/
             sed -i 's/namespace: osm\$/namespace: ${K8S_NAMESPACE}/g' /tmp/k8s-dev/*.yaml
             sed -i 's/:latest/:${IMAGE_TAG}/g' /tmp/k8s-dev/*.yaml
+            kubectl apply -f /tmp/k8s-dev/namespace-dev.yaml
+            kubectl apply -f /tmp/k8s-dev/configmap.yaml
+            kubectl apply -f /tmp/k8s-dev/secrets.yaml
             kubectl apply -f /tmp/k8s-dev/
             rm -rf /tmp/k8s-dev
         """
