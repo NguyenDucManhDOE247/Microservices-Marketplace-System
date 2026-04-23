@@ -16,13 +16,44 @@ spec:
       containers:
         - name: user-service
           image: 825621302666.dkr.ecr.ap-southeast-1.amazonaws.com/osm-user-service:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 4001
+          envFrom:
+            - configMapRef:
+                name: osm-config
           env:
             - name: MONGO_URI
-              value: mongodb://mongo:27017/userservice
+              valueFrom:
+                secretKeyRef:
+                  name: osm-secrets
+                  key: MONGO_URI_USER
             - name: JWT_SECRET
-              value: osm-jwt-secret-key-2024
+              valueFrom:
+                secretKeyRef:
+                  name: osm-secrets
+                  key: JWT_SECRET
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+          readinessProbe:
+            httpGet:
+              path: /api/users/
+              port: 4001
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /api/users/
+              port: 4001
+            initialDelaySeconds: 60
+            periodSeconds: 20
+            failureThreshold: 3
 
 ---
 apiVersion: v1

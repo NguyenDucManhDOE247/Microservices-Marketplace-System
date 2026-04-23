@@ -16,8 +16,30 @@ spec:
       containers:
         - name: frontend
           image: 825621302666.dkr.ecr.ap-southeast-1.amazonaws.com/osm-frontend:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 80
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 20
+            failureThreshold: 3
 
 ---
 apiVersion: v1
