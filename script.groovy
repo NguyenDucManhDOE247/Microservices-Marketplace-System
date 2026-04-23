@@ -208,9 +208,13 @@ def deployToKubernetes() {
         sh "kubectl apply -f ${K8S_PATH}/"
     } else if (BRANCH_NAME == "dev") {
         // Dev branch: copy manifests, replace namespace and image tags
+        // Ingress is excluded: NGINX Ingress Controller is cluster-wide and does not
+        // allow duplicate host+path combinations across namespaces. The Ingress in
+        // namespace 'osm' already claims all paths; dev uses kubectl port-forward.
         sh """
             mkdir -p /tmp/k8s-dev
             cp ${K8S_PATH}/*.yaml /tmp/k8s-dev/
+            rm -f /tmp/k8s-dev/ingress.yaml
             sed -i 's/namespace: osm\$/namespace: ${K8S_NAMESPACE}/g' /tmp/k8s-dev/*.yaml
             sed -i 's/:latest/:${IMAGE_TAG}/g' /tmp/k8s-dev/*.yaml
             kubectl apply -f /tmp/k8s-dev/namespace-dev.yaml
