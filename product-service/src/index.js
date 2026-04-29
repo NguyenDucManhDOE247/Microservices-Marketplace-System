@@ -1,14 +1,9 @@
-const express = require("express");
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
-const productRoutes = require("./routes/product.routes");
-const cors = require("cors");
+const app = require("./app");
 const Product = require("./models/product.model");
 
 dotenv.config();
-const app = express();
-app.use(cors());
-app.use(express.json());
 
 mongoose
   .connect(process.env.MONGO_URI)
@@ -53,8 +48,6 @@ mongoose
     }
   })
   .catch((err) => console.error("❌ MongoDB Error:", err));
-
-app.use("/api/products", productRoutes);
 
 const PORT = process.env.PORT || 4002;
 app.listen(PORT, () => {
