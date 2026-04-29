@@ -52,4 +52,9 @@ app.get("/metrics", async (req, res) => {
 
 app.use("/api/payments", paymentRoutes);
 
+// 404 fallback — also exercises the req.path branch in metrics middleware
+app.use((req, res) => {
+  res.status(404).json({ error: "Not found" });
+});
+
 module.exports = app;

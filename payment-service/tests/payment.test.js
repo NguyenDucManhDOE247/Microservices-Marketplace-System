@@ -50,3 +50,20 @@ describe("GET /api/payments", () => {
     expect(Array.isArray(res.body)).toBe(true);
   });
 });
+
+describe("GET /metrics", () => {
+  it("should return Prometheus metrics in text format", async () => {
+    const res = await request(app).get("/metrics");
+
+    expect(res.status).toBe(200);
+    expect(res.headers["content-type"]).toMatch(/text\/plain/);
+    expect(res.text).toContain("http_requests_total");
+  });
+
+  it("should return 404 for unknown routes", async () => {
+    const res = await request(app).get("/unknown-route-xyz");
+
+    expect(res.status).toBe(404);
+    expect(res.body.error).toBe("Not found");
+  });
+});
