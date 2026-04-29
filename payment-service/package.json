@@ -1,6 +1,6 @@
 {
   "name": "payment-service",
-  "version": "1.0.19",
+  "version": "1.0.20",
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
@@ -8,11 +8,14 @@
   },
   "jest": {
     "testEnvironment": "node",
-    "testMatch": ["**/tests/**/*.test.js"]
+    "testMatch": [
+      "**/tests/**/*.test.js"
+    ]
   },
   "dependencies": {
     "cors": "^2.8.5",
-    "express": "^4.18.2"
+    "express": "^4.18.2",
+    "prom-client": "^15.0.0"
   },
   "devDependencies": {
     "jest": "^29.7.0",

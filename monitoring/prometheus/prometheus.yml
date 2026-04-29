@@ -1,0 +1,49 @@
+# =============================================================================
+# Prometheus Configuration — Source File
+# This file mirrors the ConfigMap embedded in k8s/monitoring/prometheus.yaml.
+# Purpose: version control reference + local development/testing.
+# =============================================================================
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: osm-cluster
+    environment: production
+
+scrape_configs:
+  # Scrape all pods in namespace 'osm' that have annotation prometheus.io/scrape="true"
+  - job_name: "osm-services"
+    kubernetes_sd_configs:
+      - role: pod
+        namespaces:
+          names:
+            - osm
+    relabel_configs:
+      # Keep only pods with scrape annotation
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+        action: keep
+        regex: "true"
+      # Use custom metrics path if specified
+      - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+        action: replace
+        target_label: __metrics_path__
+        regex: (.+)
+      # Use custom port from annotation
+      - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+        action: replace
+        regex: ([^:]+)(?::\d+)?;(\d+)
+        replacement: $1:$2
+        target_label: __address__
+      # Attach app label from pod label
+      - source_labels: [__meta_kubernetes_pod_label_app]
+        action: replace
+        target_label: app
+      # Attach namespace label
+      - source_labels: [__meta_kubernetes_namespace]
+        action: replace
+        target_label: namespace
+      # Attach pod name label
+      - source_labels: [__meta_kubernetes_pod_name]
+        action: replace
+        target_label: pod
