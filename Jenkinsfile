@@ -68,6 +68,17 @@ pipeline {
             }
         }
 
+        stage("Run Tests") {
+            when {
+                expression { BRANCH_NAME == "main" || BRANCH_NAME == "dev" }
+            }
+            steps {
+                script {
+                    gv.runTests()
+                }
+            }
+        }
+
         stage("Build Docker Images") {
             when {
                 expression { BRANCH_NAME == "main" || BRANCH_NAME == "dev" }

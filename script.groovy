@@ -110,6 +110,24 @@ def bumpVersion() {
 }
 
 // -------------------------------------------------------------------
+// Run Jest tests for all backend services
+// -------------------------------------------------------------------
+def runTests() {
+    def testServices = ["user-service", "product-service", "order-service", "payment-service"]
+    echo "Running Jest tests for ${testServices.size()} services..."
+
+    testServices.each { svc ->
+        echo "Testing: ${svc}"
+        dir(svc) {
+            sh "npm install"
+            sh "npm test"
+        }
+    }
+
+    echo "All tests passed"
+}
+
+// -------------------------------------------------------------------
 // Build Docker images
 // -------------------------------------------------------------------
 def buildDockerImages() {
