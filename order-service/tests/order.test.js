@@ -32,14 +32,12 @@ describe("POST /api/orders", () => {
   it("should create an order when user exists", async () => {
     axios.get.mockResolvedValue({ data: { exists: true } });
 
-    const res = await request(app)
-      .post("/api/orders")
-      .send({
-        userEmail: "user@example.com",
-        productId: new mongoose.Types.ObjectId().toString(),
-        quantity: 2,
-        totalPrice: 1000,
-      });
+    const res = await request(app).post("/api/orders").send({
+      userEmail: "user@example.com",
+      productId: new mongoose.Types.ObjectId().toString(),
+      quantity: 2,
+      totalPrice: 1000,
+    });
 
     expect(res.status).toBe(201);
     expect(res.body.userEmail).toBe("user@example.com");
@@ -50,14 +48,12 @@ describe("POST /api/orders", () => {
   it("should return 400 when user does not exist", async () => {
     axios.get.mockResolvedValue({ data: { exists: false } });
 
-    const res = await request(app)
-      .post("/api/orders")
-      .send({
-        userEmail: "ghost@example.com",
-        productId: new mongoose.Types.ObjectId().toString(),
-        quantity: 1,
-        totalPrice: 500,
-      });
+    const res = await request(app).post("/api/orders").send({
+      userEmail: "ghost@example.com",
+      productId: new mongoose.Types.ObjectId().toString(),
+      quantity: 1,
+      totalPrice: 500,
+    });
 
     expect(res.status).toBe(400);
     expect(res.body.error).toBe("User email does not exist!");
@@ -66,14 +62,12 @@ describe("POST /api/orders", () => {
   it("should return 500 when user-service is unreachable", async () => {
     axios.get.mockRejectedValue(new Error("ECONNREFUSED"));
 
-    const res = await request(app)
-      .post("/api/orders")
-      .send({
-        userEmail: "user@example.com",
-        productId: new mongoose.Types.ObjectId().toString(),
-        quantity: 1,
-        totalPrice: 500,
-      });
+    const res = await request(app).post("/api/orders").send({
+      userEmail: "user@example.com",
+      productId: new mongoose.Types.ObjectId().toString(),
+      quantity: 1,
+      totalPrice: 500,
+    });
 
     expect(res.status).toBe(500);
   });

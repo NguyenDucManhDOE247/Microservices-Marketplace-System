@@ -89,9 +89,7 @@ describe("PUT /api/products/:id", () => {
   });
 
   it("should update a product price", async () => {
-    const res = await request(app)
-      .put(`/api/products/${productId}`)
-      .send({ price: 999 });
+    const res = await request(app).put(`/api/products/${productId}`).send({ price: 999 });
 
     expect(res.status).toBe(200);
     expect(res.body.price).toBe(999);
