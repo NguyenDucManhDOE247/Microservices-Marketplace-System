@@ -243,8 +243,12 @@ def deployToKubernetes() {
 
         // Deploy monitoring stack (Prometheus + Grafana) to dedicated namespace
         // kubectl apply -f k8s/ does NOT recurse into subdirectories, so explicit call needed
+        // Must create namespace first: grafana.yaml is alphabetically before prometheus.yaml
+        // so namespace would not exist when grafana resources are applied
         echo "Deploying monitoring stack to namespace: monitoring..."
-        sh "kubectl apply -f ${K8S_PATH}/monitoring/"
+        sh "kubectl create namespace monitoring --dry-run=client -o yaml | kubectl apply -f -"
+        sh "kubectl apply -f ${K8S_PATH}/monitoring/prometheus.yaml"
+        sh "kubectl apply -f ${K8S_PATH}/monitoring/grafana.yaml"
         echo "Monitoring stack deployed: Prometheus (ClusterIP:9090), Grafana (NodePort:32001)"
     } else if (BRANCH_NAME == "dev") {
         // Dev branch: copy manifests, replace namespace and image tags
