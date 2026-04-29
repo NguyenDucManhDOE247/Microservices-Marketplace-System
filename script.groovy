@@ -241,6 +241,15 @@ def deployToKubernetes() {
         // Apply everything else (idempotent - configmap/secrets applied again is fine)
         sh "kubectl apply -f ${K8S_PATH}/"
 
+        // Force rolling restart so pods always pull the new :latest image from ECR.
+        // kubectl apply alone does NOT restart pods when only the image content changes
+        // but the tag (:latest) stays the same in the yaml spec.
+        echo "Rolling restart of all deployments to pick up new :latest images..."
+        def deployNames = ["user-service", "product-service", "order-service", "payment-service", "frontend", "gateway"]
+        deployNames.each { d ->
+            sh "kubectl rollout restart deployment/${d} -n ${K8S_NAMESPACE}"
+        }
+
         // Deploy monitoring stack (Prometheus + Grafana) to dedicated namespace
         // kubectl apply -f k8s/ does NOT recurse into subdirectories, so explicit call needed
         // Must create namespace first: grafana.yaml is alphabetically before prometheus.yaml
