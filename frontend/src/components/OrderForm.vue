@@ -9,7 +9,7 @@
       </option>
     </select>
 
-    <input type="number" v-model.number="quantity" placeholder="Quantity" min="1" class="input" />
+    <input type="number" v-model.number="quantity" placeholder="Quantity" min="1" max="9999" class="input" />
 
     <div v-if="selectedProduct" class="info">
       💡 <strong>Description:</strong> {{ selectedProduct.description }} <br />
@@ -58,8 +58,12 @@ export default {
         this.errorMsg = "❌ Please select a service!";
         return;
       }
-      if (this.quantity < 1) {
-        this.errorMsg = "❌ Quantity must be greater than 0!";
+      if (this.quantity < 1 || !Number.isInteger(this.quantity)) {
+        this.errorMsg = "❌ Quantity must be a positive whole number!";
+        return;
+      }
+      if (this.quantity > 9999) {
+        this.errorMsg = "❌ Quantity cannot exceed 9999!";
         return;
       }
 

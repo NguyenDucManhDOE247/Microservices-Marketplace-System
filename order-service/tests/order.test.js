@@ -117,6 +117,26 @@ describe("POST /api/orders", () => {
     expect(res.status).toBe(422);
     expect(res.body.errors).toBeDefined();
   });
+
+  it("should return 422 when quantity exceeds max 9999", async () => {
+    const res = await request(app)
+      .post("/api/orders")
+      .set("Authorization", `Bearer ${validToken}`)
+      .send({ productId: "p1", quantity: 10000, totalPrice: 500 });
+
+    expect(res.status).toBe(422);
+    expect(res.body.errors).toBeDefined();
+  });
+
+  it("should return 422 when totalPrice exceeds max 100000000", async () => {
+    const res = await request(app)
+      .post("/api/orders")
+      .set("Authorization", `Bearer ${validToken}`)
+      .send({ productId: "p1", quantity: 1, totalPrice: 200000000 });
+
+    expect(res.status).toBe(422);
+    expect(res.body.errors).toBeDefined();
+  });
 });
 
 describe("GET /api/orders", () => {
