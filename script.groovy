@@ -111,10 +111,10 @@ def bumpVersion() {
 
 // -------------------------------------------------------------------
 // Run Jest tests for all backend services
-// Uses Docker (node:22-slim) to avoid npm PATH issues on Jenkins agent.
-// node:22-slim is Debian-based (glibc) - required by mongodb-memory-server.
-// MONGOMS_VERSION=6.0.4: MongoDB 7.x requires libcurl.so.4 which is absent
-//   in slim images. MongoDB 6.x only needs libssl3 + libc6 (available in slim).
+// Uses Docker (node:22-slim / Debian 12 bookworm) to avoid npm PATH issues.
+// Debian 12 only supports MongoDB >= 7.0.3 (mongodb-memory-server auto-detects).
+// MongoDB 7.x requires libcurl4 which is NOT pre-installed in slim images.
+// Fix: apt-get install libcurl4 before running tests.
 // MongoDB binary is cached in /var/lib/jenkins/.mongoms-cache between runs.
 // -------------------------------------------------------------------
 def runTests() {
@@ -134,9 +134,8 @@ def runTests() {
                     -w /app \\
                     -e CI=true \\
                     -e MONGOMS_DOWNLOAD_DIR=/mongoms-cache \\
-                    -e MONGOMS_VERSION=6.0.4 \\
                     node:22-slim \\
-                    sh -c 'npm install && npm test'
+                    sh -c 'apt-get update -qq && apt-get install -y -qq libcurl4 && npm install && npm test'
             """
         }
     }
