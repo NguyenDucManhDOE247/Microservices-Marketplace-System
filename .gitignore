@@ -60,6 +60,11 @@ coverage/
 tmp/
 temp/
 
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
 # Terraform
 terraform/.terraform/
 terraform/*.tfstate
