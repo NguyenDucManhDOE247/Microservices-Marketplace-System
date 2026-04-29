@@ -48,7 +48,8 @@ export default {
       this.errorMsg = "";
 
       const email = localStorage.getItem("email");
-      if (!email) {
+      const token = localStorage.getItem("token");
+      if (!email || !token) {
         this.errorMsg = "❌ You are not logged in!";
         return;
       }

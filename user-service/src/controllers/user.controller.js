@@ -1,8 +1,14 @@
 const User = require("../models/user.model");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const { validationResult } = require("express-validator");
 
 exports.register = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(422).json({ errors: errors.array() });
+  }
+
   try {
     const { email, password } = req.body;
 
@@ -20,6 +26,11 @@ exports.register = async (req, res) => {
 };
 
 exports.login = async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(422).json({ errors: errors.array() });
+  }
+
   try {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
@@ -28,7 +39,10 @@ exports.login = async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(401).json({ error: "Incorrect password" });
 
-    const token = jwt.sign({ id: user._id, email: user.email }, process.env.JWT_SECRET || "fallback-secret");
+    const token = jwt.sign(
+      { id: user._id, email: user.email },
+      process.env.JWT_SECRET || "fallback-secret",
+    );
     res.json({ message: "Login successful", token });
   } catch (err) {
     console.error("Login error:", err.message);

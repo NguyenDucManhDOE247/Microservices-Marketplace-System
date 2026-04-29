@@ -1,11 +1,19 @@
 const Order = require("../models/order.model");
 const axios = require("axios");
+const { validationResult } = require("express-validator");
 
 exports.createOrder = async (req, res) => {
-  const { userEmail, productId, quantity, totalPrice } = req.body;
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(422).json({ errors: errors.array() });
+  }
+
+  const { productId, quantity, totalPrice } = req.body;
+  const userEmail = req.user.email;
+  const userServiceUrl = process.env.USER_SERVICE_URL || "http://user-service:4001";
 
   try {
-    const check = await axios.get(`http://user-service:4001/api/users/check/${userEmail}`);
+    const check = await axios.get(`${userServiceUrl}/api/users/check/${userEmail}`);
     if (!check.data.exists) {
       return res.status(400).json({ error: "User email does not exist!" });
     }

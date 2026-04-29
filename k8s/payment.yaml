@@ -32,6 +32,11 @@ spec:
                 secretKeyRef:
                   name: osm-secrets
                   key: MONGO_URI_PAYMENT
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: osm-secrets
+                  key: JWT_SECRET
           resources:
             requests:
               cpu: 100m
