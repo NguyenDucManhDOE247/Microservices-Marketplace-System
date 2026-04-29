@@ -46,7 +46,9 @@ describe("POST /api/payments", () => {
 
   it("should return 500 when database throws on save", async () => {
     const Payment = require("../src/models/payment.model");
-    const saveSpy = jest.spyOn(Payment.prototype, "save").mockRejectedValueOnce(new Error("DB error"));
+    const saveSpy = jest
+      .spyOn(Payment.prototype, "save")
+      .mockRejectedValueOnce(new Error("DB error"));
 
     const res = await request(app)
       .post("/api/payments")
@@ -128,4 +130,3 @@ describe("GET /metrics", () => {
     expect(res.body.error).toBe("Not found");
   });
 });
-
