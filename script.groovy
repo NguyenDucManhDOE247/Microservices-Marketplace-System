@@ -111,21 +111,30 @@ def bumpVersion() {
 
 // -------------------------------------------------------------------
 // Run Jest tests for all backend services
+// Uses Docker (node:22-slim) to avoid npm PATH issues on Jenkins agent.
+// node:22-slim is Debian-based (glibc) - required by mongodb-memory-server.
+// MongoDB binary is cached in /var/lib/jenkins/.mongoms-cache between runs.
 // -------------------------------------------------------------------
 def runTests() {
     def testServices = ["user-service", "product-service", "order-service", "payment-service"]
     echo "Running Jest tests for ${testServices.size()} services..."
 
+    // Ensure MongoDB binary cache directory exists on Jenkins agent
+    sh "mkdir -p /var/lib/jenkins/.mongoms-cache"
+
     testServices.each { svc ->
         echo "Testing: ${svc}"
         dir(svc) {
-            sh '''#!/bin/bash
-                export NVM_DIR="$HOME/.nvm"
-                [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-                export PATH=$PATH:/usr/local/bin:/usr/bin
-                npm install
-                npm test
-            '''
+            sh """
+                docker run --rm \\
+                    -v \$(pwd):/app \\
+                    -v /var/lib/jenkins/.mongoms-cache:/mongoms-cache \\
+                    -w /app \\
+                    -e CI=true \\
+                    -e MONGOMS_DOWNLOAD_DIR=/mongoms-cache \\
+                    node:22-slim \\
+                    sh -c 'npm install && npm test'
+            """
         }
     }
 
