@@ -119,8 +119,13 @@ def runTests() {
     testServices.each { svc ->
         echo "Testing: ${svc}"
         dir(svc) {
-            sh "npm install"
-            sh "npm test"
+            sh '''#!/bin/bash
+                export NVM_DIR="$HOME/.nvm"
+                [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+                export PATH=$PATH:/usr/local/bin:/usr/bin
+                npm install
+                npm test
+            '''
         }
     }
 
