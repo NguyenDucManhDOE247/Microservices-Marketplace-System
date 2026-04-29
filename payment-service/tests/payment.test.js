@@ -1,9 +1,70 @@
 const request = require("supertest");
-const app = require("../src/app");
+const mongoose = require("mongoose");
+const { MongoMemoryServer } = require("mongodb-memory-server");
+const jwt = require("jsonwebtoken");
+
+let mongoServer;
+let app;
+
+const TEST_EMAIL = "payer@example.com";
+const validToken = jwt.sign({ id: "testid", email: TEST_EMAIL }, "fallback-secret");
+
+beforeAll(async () => {
+  mongoServer = await MongoMemoryServer.create();
+  await mongoose.connect(mongoServer.getUri());
+  app = require("../src/app");
+});
+
+afterAll(async () => {
+  await mongoose.disconnect();
+  await mongoServer.stop();
+});
+
+afterEach(async () => {
+  const collections = mongoose.connection.collections;
+  for (const key in collections) {
+    await collections[key].deleteMany({});
+  }
+});
 
 describe("POST /api/payments", () => {
-  it("should process payment successfully", async () => {
+  it("should return 401 when no token provided", async () => {
     const res = await request(app).post("/api/payments").send({ orderId: "order123", amount: 500 });
+
+    expect(res.status).toBe(401);
+  });
+
+  it("should return 401 for invalid token", async () => {
+    const res = await request(app)
+      .post("/api/payments")
+      .set("Authorization", "Bearer invalidtoken.bad.signature")
+      .send({ orderId: "order123", amount: 500 });
+
+    expect(res.status).toBe(401);
+    expect(res.body.error).toBe("Invalid or expired token.");
+  });
+
+  it("should return 500 when database throws on save", async () => {
+    const Payment = require("../src/models/payment.model");
+    const saveSpy = jest
+      .spyOn(Payment.prototype, "save")
+      .mockRejectedValueOnce(new Error("DB error"));
+
+    const res = await request(app)
+      .post("/api/payments")
+      .set("Authorization", `Bearer ${validToken}`)
+      .send({ orderId: "order123", amount: 500 });
+
+    expect(res.status).toBe(500);
+    expect(res.body.error).toBe("Server error");
+    saveSpy.mockRestore();
+  });
+
+  it("should process payment successfully", async () => {
+    const res = await request(app)
+      .post("/api/payments")
+      .set("Authorization", `Bearer ${validToken}`)
+      .send({ orderId: "order123", amount: 500 });
 
     expect(res.status).toBe(200);
     expect(res.body.message).toBe("Payment successful");
@@ -13,24 +74,34 @@ describe("POST /api/payments", () => {
     expect(res.body.paidAt).toBeDefined();
   });
 
-  it("should return 400 when orderId is missing", async () => {
-    const res = await request(app).post("/api/payments").send({ amount: 500 });
+  it("should return 422 when orderId is missing", async () => {
+    const res = await request(app)
+      .post("/api/payments")
+      .set("Authorization", `Bearer ${validToken}`)
+      .send({ amount: 500 });
 
-    expect(res.status).toBe(400);
-    expect(res.body.error).toBe("Missing orderId or amount");
+    expect(res.status).toBe(422);
+    expect(res.body.errors).toBeDefined();
   });
 
-  it("should return 400 when amount is missing", async () => {
-    const res = await request(app).post("/api/payments").send({ orderId: "order123" });
+  it("should return 422 when amount is missing", async () => {
+    const res = await request(app)
+      .post("/api/payments")
+      .set("Authorization", `Bearer ${validToken}`)
+      .send({ orderId: "order123" });
 
-    expect(res.status).toBe(400);
-    expect(res.body.error).toBe("Missing orderId or amount");
+    expect(res.status).toBe(422);
+    expect(res.body.errors).toBeDefined();
   });
 
-  it("should return 400 when both fields are missing", async () => {
-    const res = await request(app).post("/api/payments").send({});
+  it("should return 422 when both fields are missing", async () => {
+    const res = await request(app)
+      .post("/api/payments")
+      .set("Authorization", `Bearer ${validToken}`)
+      .send({});
 
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(422);
+    expect(res.body.errors).toBeDefined();
   });
 });
 

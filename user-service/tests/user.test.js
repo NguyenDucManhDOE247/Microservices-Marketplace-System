@@ -37,6 +37,24 @@ describe("POST /api/users/register", () => {
     expect(res.body.message).toBe("Registration successful");
   });
 
+  it("should return 422 for invalid email format", async () => {
+    const res = await request(app)
+      .post("/api/users/register")
+      .send({ email: "notanemail", password: "password123" });
+
+    expect(res.status).toBe(422);
+    expect(res.body.errors).toBeDefined();
+  });
+
+  it("should return 422 for password shorter than 6 characters", async () => {
+    const res = await request(app)
+      .post("/api/users/register")
+      .send({ email: "valid@example.com", password: "123" });
+
+    expect(res.status).toBe(422);
+    expect(res.body.errors).toBeDefined();
+  });
+
   it("should return 400 if email already exists", async () => {
     await request(app)
       .post("/api/users/register")
@@ -56,6 +74,15 @@ describe("POST /api/users/login", () => {
     await request(app)
       .post("/api/users/register")
       .send({ email: "login@example.com", password: "secret123" });
+  });
+
+  it("should return 422 for invalid email format on login", async () => {
+    const res = await request(app)
+      .post("/api/users/login")
+      .send({ email: "bademail", password: "secret123" });
+
+    expect(res.status).toBe(422);
+    expect(res.body.errors).toBeDefined();
   });
 
   it("should login successfully and return a token", async () => {
