@@ -240,6 +240,12 @@ def deployToKubernetes() {
         sh "kubectl apply -f ${K8S_PATH}/secrets.yaml"
         // Apply everything else (idempotent - configmap/secrets applied again is fine)
         sh "kubectl apply -f ${K8S_PATH}/"
+
+        // Deploy monitoring stack (Prometheus + Grafana) to dedicated namespace
+        // kubectl apply -f k8s/ does NOT recurse into subdirectories, so explicit call needed
+        echo "Deploying monitoring stack to namespace: monitoring..."
+        sh "kubectl apply -f ${K8S_PATH}/monitoring/"
+        echo "Monitoring stack deployed: Prometheus (ClusterIP:9090), Grafana (NodePort:32001)"
     } else if (BRANCH_NAME == "dev") {
         // Dev branch: copy manifests, replace namespace and image tags
         // Ingress is excluded: NGINX Ingress Controller is cluster-wide and does not
