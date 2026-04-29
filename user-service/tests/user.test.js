@@ -108,3 +108,42 @@ describe("GET /api/users/check/:email", () => {
     expect(res.body.exists).toBe(false);
   });
 });
+
+describe("GET /api/users/", () => {
+  it("should return demo user list", async () => {
+    const res = await request(app).get("/api/users/");
+
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+  });
+});
+
+describe("POST /api/users/register - server error", () => {
+  it("should return 500 when database throws on save", async () => {
+    const User = require("../src/models/user.model");
+    const saveSpy = jest.spyOn(User.prototype, "save").mockRejectedValueOnce(new Error("DB error"));
+
+    const res = await request(app)
+      .post("/api/users/register")
+      .send({ email: "error@example.com", password: "password123" });
+
+    expect(res.status).toBe(500);
+    expect(res.body.error).toBe("Server error");
+    saveSpy.mockRestore();
+  });
+});
+
+describe("POST /api/users/login - server error", () => {
+  it("should return 500 when database throws on findOne", async () => {
+    const User = require("../src/models/user.model");
+    const findSpy = jest.spyOn(User, "findOne").mockRejectedValueOnce(new Error("DB error"));
+
+    const res = await request(app)
+      .post("/api/users/login")
+      .send({ email: "login@example.com", password: "secret123" });
+
+    expect(res.status).toBe(500);
+    expect(res.body.error).toBe("Server error");
+    findSpy.mockRestore();
+  });
+});
