@@ -45,6 +45,20 @@ describe("POST /api/orders", () => {
     expect(res.status).toBe(401);
   });
 
+  it("should return 401 for invalid token", async () => {
+    const res = await request(app)
+      .post("/api/orders")
+      .set("Authorization", "Bearer invalidtoken.bad.signature")
+      .send({
+        productId: new mongoose.Types.ObjectId().toString(),
+        quantity: 1,
+        totalPrice: 500,
+      });
+
+    expect(res.status).toBe(401);
+    expect(res.body.error).toBe("Invalid or expired token.");
+  });
+
   it("should create an order when user exists", async () => {
     axios.get.mockResolvedValue({ data: { exists: true } });
 

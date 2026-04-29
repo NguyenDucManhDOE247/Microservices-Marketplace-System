@@ -34,6 +34,30 @@ describe("POST /api/payments", () => {
     expect(res.status).toBe(401);
   });
 
+  it("should return 401 for invalid token", async () => {
+    const res = await request(app)
+      .post("/api/payments")
+      .set("Authorization", "Bearer invalidtoken.bad.signature")
+      .send({ orderId: "order123", amount: 500 });
+
+    expect(res.status).toBe(401);
+    expect(res.body.error).toBe("Invalid or expired token.");
+  });
+
+  it("should return 500 when database throws on save", async () => {
+    const Payment = require("../src/models/payment.model");
+    const saveSpy = jest.spyOn(Payment.prototype, "save").mockRejectedValueOnce(new Error("DB error"));
+
+    const res = await request(app)
+      .post("/api/payments")
+      .set("Authorization", `Bearer ${validToken}`)
+      .send({ orderId: "order123", amount: 500 });
+
+    expect(res.status).toBe(500);
+    expect(res.body.error).toBe("Server error");
+    saveSpy.mockRestore();
+  });
+
   it("should process payment successfully", async () => {
     const res = await request(app)
       .post("/api/payments")
