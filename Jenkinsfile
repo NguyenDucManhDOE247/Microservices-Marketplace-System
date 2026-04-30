@@ -6,11 +6,11 @@ pipeline {
     agent any
     
     environment {
-        AWS_ACCOUNT_ID = "825621302666"
         AWS_REGION = "ap-southeast-1"
-        ECR_REGISTRY = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
         EKS_CLUSTER = "osm-cluster"
-        K8S_PATH = "k8s"
+        K8S_PATH    = "k8s"
+        // AWS_ACCOUNT_ID and ECR_REGISTRY are resolved dynamically in Init stage
+        // using the IAM role attached to the Jenkins EC2 instance
     }
     
     stages {
@@ -32,6 +32,11 @@ pipeline {
         stage("Init") {
             steps {
                 script {
+                    env.AWS_ACCOUNT_ID = sh(
+                        returnStdout: true,
+                        script: 'aws sts get-caller-identity --query Account --output text'
+                    ).trim()
+                    env.ECR_REGISTRY = "${env.AWS_ACCOUNT_ID}.dkr.ecr.${env.AWS_REGION}.amazonaws.com"
                     gv = load "script.groovy"
                     gv.initBranchConfig()
                 }

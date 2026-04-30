@@ -1,0 +1,17 @@
+# Helm values for nginx-ingress-controller on AWS EKS
+# Install command:
+#   helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
+#     --namespace ingress-nginx --create-namespace \
+#     --values k8s/nginx-ingress-values.yaml
+#
+# These annotations ensure the LoadBalancer is created in PUBLIC subnets
+# (public subnets are tagged kubernetes.io/role/elb=1 by Terraform VPC module).
+controller:
+  service:
+    annotations:
+      # Use AWS Load Balancer Controller (NLB) instead of classic ELB
+      service.beta.kubernetes.io/aws-load-balancer-type: "external"
+      service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: "ip"
+      # REQUIRED: Create internet-facing LB in public subnets
+      # Without this, EKS defaults to an internal (private) LoadBalancer
+      service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"

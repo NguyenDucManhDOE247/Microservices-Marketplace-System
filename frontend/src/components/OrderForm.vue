@@ -9,7 +9,14 @@
       </option>
     </select>
 
-    <input type="number" v-model.number="quantity" placeholder="Quantity" min="1" class="input" />
+    <input
+      type="number"
+      v-model.number="quantity"
+      placeholder="Quantity"
+      min="1"
+      max="9999"
+      class="input"
+    />
 
     <div v-if="selectedProduct" class="info">
       💡 <strong>Description:</strong> {{ selectedProduct.description }} <br />

@@ -3,6 +3,9 @@ services:
     image: mongo:8.0-noble
     ports:
       - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=OsmApp2024!
     volumes:
       - mongodb-data:/data/db
     networks:
@@ -14,7 +17,7 @@ services:
     ports:
       - "4001:4001"
     environment:
-      - MONGO_URI=mongodb://mongo:27017/userservice
+      - MONGO_URI=mongodb://admin:OsmApp2024!@mongo:27017/userservice?authSource=admin
       - JWT_SECRET=osm-jwt-secret-key-2024
     depends_on:
       - mongo
@@ -28,7 +31,7 @@ services:
     ports:
       - "4002:4002"
     environment:
-      - MONGO_URI=mongodb://mongo:27017/productservice
+      - MONGO_URI=mongodb://admin:OsmApp2024!@mongo:27017/productservice?authSource=admin
     depends_on:
       - mongo
     networks:
@@ -41,7 +44,7 @@ services:
     ports:
       - "4003:4003"
     environment:
-      - MONGO_URI=mongodb://mongo:27017/orderservice
+      - MONGO_URI=mongodb://admin:OsmApp2024!@mongo:27017/orderservice?authSource=admin
       - JWT_SECRET=osm-jwt-secret-key-2024
       - USER_SERVICE_URL=http://user-service:4001
     depends_on:
@@ -56,7 +59,7 @@ services:
     ports:
       - "4004:4004"
     environment:
-      - MONGO_URI=mongodb://mongo:27017/paymentservice
+      - MONGO_URI=mongodb://admin:OsmApp2024!@mongo:27017/paymentservice?authSource=admin
       - JWT_SECRET=osm-jwt-secret-key-2024
     depends_on:
       - mongo
@@ -83,4 +86,4 @@ networks:
     driver: bridge
 
 volumes:
-  mongo-data:
+  mongodb-data:
