@@ -1,5 +1,9 @@
-# MongoDB runs on EC2 (10.0.10.45) - this Service + Endpoints
-# allows K8s pods to reach it via dns name "mongo" as before
+# MongoDB runs on EC2 - this Service + Endpoints
+# allows K8s pods to reach it via dns name "mongo" as before.
+#
+# ⚠️  IP PHẢI CẬP NHẬT sau mỗi lần terraform apply:
+#    terraform -chdir=terraform output -raw mongodb_private_ip
+#    Sau đó update giá trị ip bên dưới.
 apiVersion: v1
 kind: Service
 metadata:
@@ -19,6 +23,6 @@ metadata:
   namespace: osm
 subsets:
   - addresses:
-      - ip: "10.0.10.45"
+      - ip: "10.0.10.45" # UPDATE: terraform output -raw mongodb_private_ip
     ports:
       - port: 27017
