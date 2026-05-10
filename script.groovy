@@ -134,6 +134,8 @@ def runTests() {
                     -w /app \\
                     -e CI=true \\
                     -e MONGOMS_DOWNLOAD_DIR=/mongoms-cache \\
+                    -e HOST_UID=\$(id -u) \\
+                    -e HOST_GID=\$(id -g) \\
                     node:22-slim \\
                     sh -c '
                         apt-get update -qq &&
@@ -141,7 +143,7 @@ def runTests() {
                         npm install &&
                         npm test;
                         EXIT=\$?;
-                        chown -R \$(stat -c "%u:%g" /app) /app/coverage /app/node_modules 2>/dev/null || true;
+                        chown -R \${HOST_UID}:\${HOST_GID} /app/coverage /app/node_modules 2>/dev/null || true;
                         exit \$EXIT
                     '
             """
