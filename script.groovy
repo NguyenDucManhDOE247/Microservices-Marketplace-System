@@ -275,7 +275,7 @@ def deployToKubernetes() {
         // allow duplicate host+path combinations across namespaces. The Ingress in
         // namespace 'osm' already claims all paths; dev uses kubectl port-forward.
         sh """
-            mkdir -p /tmp/k8s-dev
+            rm -rf /tmp/k8s-dev && mkdir /tmp/k8s-dev
             cp ${K8S_PATH}/*.yaml /tmp/k8s-dev/
             rm -f /tmp/k8s-dev/ingress.yaml
             sed -i 's/namespace: osm\$/namespace: ${K8S_NAMESPACE}/g' /tmp/k8s-dev/*.yaml
