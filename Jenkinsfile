@@ -26,7 +26,8 @@ pipeline {
             steps {
                 // Fix any root-owned files left by previous Docker test runs so
                 // the SCM checkout (which cleans the workspace) can succeed.
-                sh 'find . -maxdepth 5 \( -name "coverage" -o -name "node_modules" \) -exec chown -R $(id -u):$(id -g) {} + 2>/dev/null || true'
+                sh 'find . -maxdepth 5 -name "coverage"     -exec chown -R $(id -u):$(id -g) {} + 2>/dev/null || true'
+                sh 'find . -maxdepth 5 -name "node_modules" -exec chown -R $(id -u):$(id -g) {} + 2>/dev/null || true'
                 checkout scm
                 script {
                     def commitMsg = sh(script: "git log -1 --pretty=%B", returnStdout: true).trim()
