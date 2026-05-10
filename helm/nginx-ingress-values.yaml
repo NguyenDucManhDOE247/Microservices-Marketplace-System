@@ -2,7 +2,7 @@
 # Install command:
 #   helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
 #     --namespace ingress-nginx --create-namespace \
-#     --values k8s/nginx-ingress-values.yaml
+#     --values helm/nginx-ingress-values.yaml
 #
 # These annotations ensure the LoadBalancer is created in PUBLIC subnets
 # (public subnets are tagged kubernetes.io/role/elb=1 by Terraform VPC module).
