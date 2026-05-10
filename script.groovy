@@ -135,7 +135,15 @@ def runTests() {
                     -e CI=true \\
                     -e MONGOMS_DOWNLOAD_DIR=/mongoms-cache \\
                     node:22-slim \\
-                    sh -c 'apt-get update -qq && apt-get install -y -qq libcurl4 && npm install && npm test'
+                    sh -c '
+                        apt-get update -qq &&
+                        apt-get install -y -qq libcurl4 &&
+                        npm install &&
+                        npm test;
+                        EXIT=\$?;
+                        chown -R \$(stat -c "%u:%g" /app) /app/coverage /app/node_modules 2>/dev/null || true;
+                        exit \$EXIT
+                    '
             """
         }
     }
