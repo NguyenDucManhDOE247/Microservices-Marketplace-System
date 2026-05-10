@@ -4,6 +4,14 @@ def gv
 
 pipeline {
     agent any
+
+    options {
+        // Skip the automatic SCM checkout done by declarative pipeline.
+        // This prevents Jenkins from trying to clean a workspace that may contain
+        // root-owned files (created by Docker tests) which Jenkins cannot delete.
+        // We do a manual chown + checkout in the first stage instead.
+        skipDefaultCheckout(true)
+    }
     
     environment {
         AWS_REGION = "ap-southeast-1"
@@ -16,6 +24,10 @@ pipeline {
     stages {
         stage("Skip CI Check") {
             steps {
+                // Fix any root-owned files left by previous Docker test runs so
+                // the SCM checkout (which cleans the workspace) can succeed.
+                sh 'find . -maxdepth 5 \( -name "coverage" -o -name "node_modules" \) -exec chown -R $(id -u):$(id -g) {} + 2>/dev/null || true'
+                checkout scm
                 script {
                     def commitMsg = sh(script: "git log -1 --pretty=%B", returnStdout: true).trim()
                     if (commitMsg.contains("[skip ci]")) {
