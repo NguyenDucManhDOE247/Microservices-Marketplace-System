@@ -119,6 +119,17 @@ pipeline {
             }
         }
         
+        stage("Cleanup Docker") {
+            when {
+                expression { BRANCH_NAME == "main" || BRANCH_NAME == "dev" }
+            }
+            steps {
+                script {
+                    gv.cleanupDocker()
+                }
+            }
+        }
+
         stage("Deploy to Kubernetes") {
             when {
                 expression { BRANCH_NAME == "main" || BRANCH_NAME == "dev" }

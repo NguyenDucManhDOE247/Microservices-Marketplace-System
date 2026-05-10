@@ -231,6 +231,21 @@ def installClusterPrerequisites() {
 }
 
 // -------------------------------------------------------------------
+// Cleanup Docker: remove dangling images and build cache to free disk space
+// -------------------------------------------------------------------
+def cleanupDocker() {
+    echo "Cleaning up Docker resources to free disk space..."
+    // Remove dangling images (untagged layers from previous builds)
+    sh 'docker image prune -f'
+    // Remove build cache older than 24h to keep recent layers cached for speed
+    sh 'docker builder prune -f --filter until=24h'
+    // Remove stopped containers (should be none, but clean up just in case)
+    sh 'docker container prune -f'
+    echo "Docker cleanup complete. Current disk usage:"
+    sh 'df -h / | tail -1'
+}
+
+// -------------------------------------------------------------------
 def deployToKubernetes() {
     echo "Updating kubeconfig for EKS cluster ${EKS_CLUSTER}..."
     sh "aws eks update-kubeconfig --name ${EKS_CLUSTER} --region ${AWS_REGION}"
