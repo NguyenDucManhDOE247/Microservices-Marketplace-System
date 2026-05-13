@@ -126,7 +126,6 @@ pipeline {
             steps {
                 script {
                     gv.cleanupDocker()
-                    gv.applyEcrLifecyclePolicy()
                 }
             }
         }
