@@ -25,13 +25,25 @@
 #    Uses MongoDB's localhost exception (only works when
 #    no users exist yet and auth is NOT yet enabled)
 # --------------------------------------------------------
-- name: Check if MongoDB admin user already exists (unauthenticated)
+- name: Check if MongoDB admin user already exists (authenticated)
+  shell: >
+    mongosh --quiet --port {{ mongodb_port }}
+    -u {{ mongodb_admin_user }} -p {{ mongodb_admin_password }}
+    --authenticationDatabase admin
+    --eval "db.getSiblingDB('admin').getUser('{{ mongodb_admin_user }}')"
+  register: admin_auth_check
+  changed_when: false
+  failed_when: false
+  no_log: true
+
+- name: Check if MongoDB admin user already exists (unauthenticated fallback)
   shell: >
     mongosh --quiet --port {{ mongodb_port }} --eval
     "db.getSiblingDB('admin').getUser('{{ mongodb_admin_user }}')"
-  register: admin_check
+  register: admin_noauth_check
   changed_when: false
   failed_when: false
+  when: admin_auth_check.rc != 0
 
 - name: Create MongoDB admin user via localhost exception
   shell: |
@@ -48,8 +60,11 @@
       })
     "
   when: >
-    admin_check.stdout is defined and
-    (admin_check.stdout == 'null' or admin_check.rc != 0)
+    admin_auth_check.rc != 0 and
+    admin_noauth_check is not skipped and
+    (admin_noauth_check.stdout is not defined or
+     admin_noauth_check.stdout == 'null' or
+     admin_noauth_check.rc != 0)
   no_log: true
   register: admin_create
   changed_when: admin_create.rc == 0
