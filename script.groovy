@@ -18,8 +18,9 @@ def initBranchConfig() {
         echo "Branch: main → namespace: osm, tag: latest + version"
     } else if (BRANCH_NAME == "dev") {
         K8S_NAMESPACE = "osm-dev"
-        IMAGE_TAG = "dev-${BUILD_NUMBER}"
-        echo "Branch: dev → namespace: osm-dev, tag: dev-${BUILD_NUMBER}"
+        def shortCommit = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+        IMAGE_TAG = "dev-${BUILD_NUMBER}-${shortCommit}"
+        echo "Branch: dev → namespace: osm-dev, tag: ${IMAGE_TAG}"
     } else {
         K8S_NAMESPACE = ""
         IMAGE_TAG = ""
@@ -241,8 +242,68 @@ def cleanupDocker() {
     sh 'docker builder prune -f --filter until=24h'
     // Remove stopped containers (should be none, but clean up just in case)
     sh 'docker container prune -f'
+    // Remove local dev-tagged images (already pushed to ECR, no longer needed locally)
+    if (BRANCH_NAME == "dev") {
+        sh "docker images --format '{{.Repository}}:{{.Tag}}' | grep ':dev-' | xargs -r docker rmi -f 2>/dev/null || true"
+    }
     echo "Docker cleanup complete. Current disk usage:"
     sh 'df -h / | tail -1'
+}
+
+// -------------------------------------------------------------------
+// Apply ECR lifecycle policy to keep only last N images per repo
+// Called once per deploy to enforce retention (idempotent)
+// -------------------------------------------------------------------
+def applyEcrLifecyclePolicy() {
+    def repos = ["osm-user-service", "osm-product-service", "osm-order-service",
+                 "osm-payment-service", "osm-frontend", "osm-gateway"]
+    def policy = '''{
+        "rules": [
+            {
+                "rulePriority": 1,
+                "description": "Keep last 5 dev images",
+                "selection": {
+                    "tagStatus": "tagged",
+                    "tagPrefixList": ["dev-"],
+                    "countType": "imageCountMoreThan",
+                    "countNumber": 5
+                },
+                "action": { "type": "expire" }
+            },
+            {
+                "rulePriority": 2,
+                "description": "Keep last 10 versioned images",
+                "selection": {
+                    "tagStatus": "tagged",
+                    "tagPrefixList": ["1."],
+                    "countType": "imageCountMoreThan",
+                    "countNumber": 10
+                },
+                "action": { "type": "expire" }
+            },
+            {
+                "rulePriority": 3,
+                "description": "Expire untagged images after 1 day",
+                "selection": {
+                    "tagStatus": "untagged",
+                    "countType": "sinceImagePushed",
+                    "countUnit": "days",
+                    "countNumber": 1
+                },
+                "action": { "type": "expire" }
+            }
+        ]
+    }'''
+    repos.each { repo ->
+        sh """
+            aws ecr put-lifecycle-policy \
+                --repository-name ${repo} \
+                --lifecycle-policy-text '${policy}' \
+                --region ${AWS_REGION} \
+                > /dev/null
+        """
+    }
+    echo "ECR lifecycle policies applied: keep 5 dev images, 10 versioned images per repo"
 }
 
 // -------------------------------------------------------------------
